@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+
+<body>
+
+<video class="input_video" style="display:none"></video>
+
+<script>
+
+const scene = new THREE.Scene();
+const camera3D = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight,0.1,1000);
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial({color:0x00ff00});
+const cube = new THREE.Mesh(geometry,material);
+
+scene.add(cube);
+camera3D.position.z = 5;
+
+function animate(){
+requestAnimationFrame(animate);
+renderer.render(scene,camera3D);
+}
+
+animate();
+
+const videoElement = document.getElementsByClassName('input_video')[0];
+
+const hands = new Hands({
+locateFile: (file) => {
+return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+}
+});
+
+hands.onResults(results => {
+
+if(results.multiHandLandmarks){
+
+let x = results.multiHandLandmarks[0][8].x;
+let y = results.multiHandLandmarks[0][8].y;
+
+cube.position.x = (x-0.5)*10;
+cube.position.y = -(y-0.5)*10;
+
+}
+
+});
+
+const camera = new Camera(videoElement,{
+onFrame: async () => {
+await hands.send({image: videoElement});
+},
+width:640,
+height:480
+});
+
+camera.start();
+
+</script>
+
+</body>
+</html>
